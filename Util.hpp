@@ -9,8 +9,10 @@
 * \file Util.hpp
 * \class Util
 * \brief Classe totalmente privada, com metodos gerais e auxiliares
-* \author Carlos Pedroso
-* \author Eduardo Cembranel
+* \author Eduardo Cembranel 
+* \author Guilherme Maci
+* \author Lucas Rodrigues
+* \author Ysyo Socorro
 */
 
 class Util
@@ -33,8 +35,6 @@ class Util
       * pos:ter retirado os espaços desnecessários
       */
       static void flushInput ();
-
-      static bool ehNumTraco (const std::string &);
 
       static void ignoraAte (std::ifstream &, char);
       
