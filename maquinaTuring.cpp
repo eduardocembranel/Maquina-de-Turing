@@ -1,27 +1,41 @@
 #include <fstream>
 #include <iostream>
 
-#include "maquinaTuring.hpp"
+#include "MaquinaTuring.hpp"
 #include "Destino.hpp"
 #include "Util.hpp"
 
+/* brief: construtor da classe: inicializa a maquina e sua fita
+* pre: nenhuma
+* pos: maquina inicializada
+*/
 MaquinaTuring::MaquinaTuring () : Fita() {}
 
-void MaquinaTuring::carregaMaquina (const std::string &nomeArquivo)
+/* brief: carrega a maquina de turing a partir de um arquivo txt
+* param: nome do arquivo
+* pre: sintaxe do arquivo ser valida
+* pos: ter carregado a maquina caso o arquivo exista
+*/
+void MaquinaTuring::carrega (const std::string &nomeArquivo)
 {
-   this->transicoes.clear();
    std::ifstream file(nomeArquivo, std::ios::in);
-
    if (file.fail()) throw "Arquivo nao encontrado!";
 
-   file.ignore(1, '\n');
-   this->carregaFinais(file);
-   file.ignore(1, '\n');
-   this->carregaTransicoes(file);
+   this->transicoes.clear();
+   this->estadosFinais.clear();
 
+   Util::ignoraAte(file, '\n'); //ignora a linha de estados
+   this->carregaFinais(file);
+   Util::ignoraAte(file, '\n'); //ignora a linha de alfabeto
+   this->carregaTransicoes(file);
    file.close();
 }
 
+/* brief: carrega os estados finais da maquina a partir de um arquivo txt
+* param: buffer de leitura de arquivo txt
+* pre: cursor do arquivo estar posicionado na posicao correta
+* pos: ter os estados finais carregados
+*/
 void MaquinaTuring::carregaFinais (std::ifstream &file)
 {
    char c;
@@ -33,9 +47,13 @@ void MaquinaTuring::carregaFinais (std::ifstream &file)
          file >> temp;
          this->estadosFinais.insert(temp);
       }
-   Util::ignoraAte(file, '\n');
 }
 
+/* brief: carrega as transicoes da maquina a partir de um arquivo txt
+* param: buffer de leitura de arquivo txt
+* pre: cursor do arquivo estar posicionado na posicao correta
+* pos: ter as transicoes carregadas
+*/
 void MaquinaTuring::carregaTransicoes (std::ifstream &file)
 {
    while (!file.eof())
@@ -46,47 +64,34 @@ void MaquinaTuring::carregaTransicoes (std::ifstream &file)
       char simboloTemp;
 
       //leitura do estado de partida. Ex: (q1,a)
-      {
-         Util::ignoraAte(file, 'q');
-         file >> estadoTemp;
-         Util::ignoraAte(file, ',');
-         do { file >> simboloTemp; } while (simboloTemp == ' ');
-         chave = Util::concatena(estadoTemp, simboloTemp);
-      }
+      Util::ignoraAte(file, 'q');
+      file >> estadoTemp;
+      Util::ignoraAte(file, ',');
+      do { file >> simboloTemp; } while (simboloTemp == ' ');
+      chave = Util::concatena(estadoTemp, simboloTemp);
 
       //leitura do estado de chegada. Ex: (q2,X,D)
-      {
-         Util::ignoraAte(file, 'q');
-         file >> dest.estado;
-         Util::ignoraAte(file, ',');
-         do { file >> dest.saida; } while (dest.saida == ' ');
-         Util::ignoraAte(file, ',');
-         char temp;
-         do { file >> temp; } while (temp == ' ');
-         (temp == 'E') ? dest.direcao = Destino::ESQUERDA : 
-                         dest.direcao = Destino::DIREITA;
-      }
-      
-      transicoes.insert(std::make_pair(chave, dest));
+      Util::ignoraAte(file, 'q');
+      file >> dest.estado;
+      Util::ignoraAte(file, ',');
+      do { file >> dest.saida; } while (dest.saida == ' ');
+      Util::ignoraAte(file, ',');
+      do { file >> dest.direcao; } while (dest.direcao == ' ');
       Util::ignoraAte(file, '\n');
+   
+      transicoes.insert(std::make_pair(chave, dest));
    }
 }
 
-void MaquinaTuring::teste ()
-{
-   // Chave chave(3, 'Y');
-   // for (auto &it : transicoes)
-   // {
-   //    it.second.teste();
-   //    std::cout << std::endl;
-   // }
-   // Util::pressRetornar();
-}
-
+/* brief: processa uma cadeia na maquina de turing
+* param: cadeia a ser processada
+* pre: nenhuma
+* pos: ter exibido os procedimentos do processamento da cadeia
+*/
 void MaquinaTuring::processa (const std::string &str)
 {
    //adiciona a fita na maquina
-   Fita::add("*" + str + "$");
+   Fita::add(str);
    Fita::showFita();
 
    while (this->existeTransicao(Util::concatena(atual, cadeia[posFita])))
@@ -94,21 +99,35 @@ void MaquinaTuring::processa (const std::string &str)
       //atualiza a fita
       Destino temp = this->transicoes[Util::concatena(atual, cadeia[posFita])];
       cadeia[posFita] = temp.saida;
-      this->atual = temp.estado; 
-      (temp.direcao == Destino::DIREITA) ? ++posFita : --posFita;
+      this->atual = temp.estado;
+      (temp.direcao == 'D') ? ++posFita : --posFita;
 
       Fita::showFita();
    }
-   //caso a cadeia tenha sido rejeitada pela maquina
-   if (!this->ehEstadoFinal(atual))
-      throw "Cadeia rejeitada!";
+   
+   if (this->ehEstadoFinal(atual))
+      std::cout << "\nCadeia aceita!\n";
+   else
+      std::cout << "\nCadeia rejeitada!\n";
 }
 
+/* brief: funcao que verifica se um determinado estado eh estado final
+* param: estado a ser checado
+* return: true: eh estado final. false: caso contrario
+* pre: nenhuma
+* pos: nenhuma
+*/
 bool MaquinaTuring::ehEstadoFinal (int other) const
 {
    return (this->estadosFinais.find(other) != this->estadosFinais.end());
 }
 
+/* brief: funcao que verifica se existe uma determinada transicao possivel
+* param: string -> chave contendo estado e simbolo atual da fita
+* return: true: existe transicao. false: caso contrario
+* pre: nenhuma
+* pos: nenhuma
+*/
 bool MaquinaTuring::existeTransicao (std::string str) const
 {
    return (this->transicoes.find(str) != this->transicoes.end());

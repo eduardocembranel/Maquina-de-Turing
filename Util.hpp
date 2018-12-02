@@ -1,19 +1,18 @@
 #ifndef UTIL_HPP
 #define UTIL_HPP
 
-#include <string>
-#include <vector>
-#include <fstream>
-
 /*
 * \file Util.hpp
 * \class Util
-* \brief Classe totalmente privada, com metodos gerais e auxiliares
+* \brief Classe com metodos gerais e auxiliares
 * \author Eduardo Cembranel 
 * \author Guilherme Maci
 * \author Lucas Rodrigues
 * \author Ysyo Socorro
 */
+
+#include <string>
+#include <fstream>
 
 class Util
 {
@@ -36,8 +35,21 @@ class Util
       */
       static void flushInput ();
 
+      /* brief: ignora os caracteres de um arquivo txt ate um caracter
+      * determinado ser lido
+      * param: buffer de leitura de arquivo e caracter de parada
+      * pre: arquivo aberto
+      * pos: ter o cursor posicionado logo apos o caracter de parada
+      */
       static void ignoraAte (std::ifstream &, char);
-      
+
+
+      /* brief: concatena um int e char separados por \n na forma de string 
+      * param: inteiro e caracter a serem concatenados
+      * return: string concatenada
+      * pre: nenhuma
+      * pos: ter retornado a string concatenada
+      */
       static std::string concatena (int, char);
    
    private:
